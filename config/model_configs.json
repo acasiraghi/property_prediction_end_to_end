@@ -1,0 +1,23 @@
+[
+  {
+    "name": "MDR1_ER",
+    "algorithm": "SVM",
+    "r squared": 0.45,
+    "featurizer": "morgan",
+    "featurizer-params": { "radius": 3, "fpSize": 1024 }
+  },
+  {
+    "name": "HLM",
+    "algorithm": "RF",
+    "r squared": 0.23,
+    "featurizer": "atompairs",
+    "featurizer-params": { "fpSize": 512 }
+  },
+  {
+    "name": "RLM",
+    "algorithm": "Ridge",
+    "r squared": 0.76,
+    "featurizer": "feature-morgan",
+    "featurizer-params": { "radius": 2, "fpSize": 512 }
+  }
+]
