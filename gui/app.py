@@ -97,20 +97,34 @@ with st.container(border = False, key = 'layout_container'):
     with col2:
     
         if st.session_state.results_df is None and st.session_state.request_error is None: 
-            #st.write('Load compounds and define settings to start predictions.')
             st.markdown('<div style="align-text: center; align-items: center; justify-content: center; display: flex; height: 520px;"> Load compounds and define settings to start predictions. </div>', unsafe_allow_html = True)
         elif st.session_state.request_error is not None:
             st.error(st.session_state.request_error)
         else:
             with st.container(border = False, height = 'stretch', key = 'results_container'):
                 col2_1, col2_2 = st.columns([3, 1], gap = 'small')
+                results_df = st.session_state.results_df.copy()
+                results_df['svg_text'] = results_df['smiles'].apply(smiles_to_svg)
+                results_df['svg_datauri'] = results_df['svg_text'].apply(svg_to_datauri)
+                results_df.drop(columns = ['svg_text'], inplace = True)
+               
+                # need to join predictions with data in original csv!
+
+                with col2_2:
+                    with st.container(border = True, height = 'stretch', key = 'filters_container'):
+                        min_value = results_df['MDR1_ER'].min()
+                        max_value = results_df['MDR1_ER'].max()
+                        value_range = st.slider('label', min_value = min_value, max_value = max_value, value = (min_value, max_value), key = 'slider_key')
+
                 with col2_1:
                     with st.container(border = True, height = 'stretch', key = 'df_container'):
-                        results_df = st.session_state.results_df.copy()
-                        # change col names back to original
-                        results_df['svg_text'] = results_df['smiles'].apply(smiles_to_svg)
-                        results_df['svg_datauri'] = results_df['svg_text'].apply(svg_to_datauri)
-                        results_df.drop(columns = ['svg_text'], inplace = True)
+                        # need to change col names back to original
+                        
+                        # filter data
+                        results_df = results_df[results_df['MDR1_ER'].between(*value_range)]
+
+
+
                         st.data_editor(
                                         results_df,
                                         column_config = {'svg_datauri': st.column_config.ImageColumn(width = 'large')},
@@ -118,9 +132,4 @@ with st.container(border = False, key = 'layout_container'):
                                         height = 580, 
                                         hide_index = True
                                         )
-                with col2_2:
-                    with st.container(border = True, height = 'stretch', key = 'filters_container'):
-                        pass
-                        #filters here
 
-                #create gitignore before committing git
