@@ -11,6 +11,9 @@ if 'results_df' not in st.session_state:
 if 'request_error' not in st.session_state:
     st.session_state.request_error = None
 
+if 'number_of_filters' not in st.session_state:
+    st.session_state.number_of_filters = 0
+
 st.set_page_config(layout = 'wide')
 st.header('Property Prediction')
 st.divider(width = 'stretch')
@@ -102,7 +105,7 @@ with st.container(border = False, key = 'layout_container'):
             st.error(st.session_state.request_error)
         else:
             with st.container(border = False, height = 'stretch', key = 'results_container'):
-                col2_1, col2_2 = st.columns([3, 1], gap = 'small')
+                col2_1, col2_2 = st.columns([4, 2], gap = 'small')
                 results_df = st.session_state.results_df.copy()
                 results_df['svg_text'] = results_df['smiles'].apply(smiles_to_svg)
                 results_df['svg_datauri'] = results_df['svg_text'].apply(svg_to_datauri)
@@ -111,18 +114,44 @@ with st.container(border = False, key = 'layout_container'):
                 # need to join predictions with data in original csv!
 
                 with col2_2:
-                    with st.container(border = True, height = 'stretch', key = 'filters_container'):
-                        min_value = results_df['MDR1_ER'].min()
-                        max_value = results_df['MDR1_ER'].max()
-                        value_range = st.slider('label', min_value = min_value, max_value = max_value, value = (min_value, max_value), key = 'slider_key')
+                    with st.expander('Filters'):
+                        
+                        numeric_columns = results_df.select_dtypes(include='number').columns
+
+                        with st.container(border = False, horizontal = True):
+                            if st.button('\-', width = 'stretch', type = 'tertiary'):
+                                st.session_state.number_of_filters -= 1
+                            if st.button('\+', width = 'stretch', type = 'tertiary'):
+                                st.session_state.number_of_filters += 1
+
+                        with st.container(border = False, height = 'stretch', key = 'filters_container', gap = 'medium'):        
+                            for i in range(min(st.session_state.number_of_filters, 5)):
+
+                                with st.container(border = True, horizontal = True, key = f'filter_{i}'):
+                                    column_to_filter = st.selectbox('Select column to filter', 
+                                                                    options = numeric_columns,
+                                                                    label_visibility = 'collapsed', 
+                                                                    width = 'stretch',
+                                                                    key = f'col_select_{i}')
+                                    min_value = results_df[column_to_filter].min()
+                                    max_value = results_df[column_to_filter].max()
+                                    value_range = st.slider(f'{column_to_filter} slider', 
+                                                            min_value = min_value, 
+                                                            max_value = max_value, 
+                                                            value = (min_value, max_value), 
+                                                            label_visibility = 'collapsed',
+                                                            width = 'stretch',
+                                                            key = f'filter_slider_{i}')
+                                    
+                                    results_df = results_df[results_df[column_to_filter].between(*value_range)]
 
                 with col2_1:
                     with st.container(border = True, height = 'stretch', key = 'df_container'):
                         # need to change col names back to original
-                        
-                        # filter data
-                        results_df = results_df[results_df['MDR1_ER'].between(*value_range)]
 
+                        
+
+                        
 
 
                         st.data_editor(
@@ -130,6 +159,7 @@ with st.container(border = False, key = 'layout_container'):
                                         column_config = {'svg_datauri': st.column_config.ImageColumn(width = 'large')},
                                         row_height = 110,
                                         height = 580, 
-                                        hide_index = True
+                                        hide_index = True,
+                                        disabled = True
                                         )
 
