@@ -109,7 +109,13 @@ with st.container(border = False, key = 'layout_container'):
                 col2_1, col2_2 = st.columns([4, 2], gap = 'small')
                 results_df = st.session_state.results_df.copy()
                 results_df['svg_text'] = results_df[smiles_column].apply(smiles_to_svg)
-                results_df['svg_datauri'] = results_df['svg_text'].apply(svg_to_datauri)
+                
+                results_df.insert(0,
+                                  'Structure_SVG',
+                                   value = results_df['svg_text'].apply(svg_to_datauri),
+                                   allow_duplicates = True
+                                   )
+                
                 results_df.drop(columns = ['svg_text'], inplace = True)
                
                 # need to join predictions with data in original csv!

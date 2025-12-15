@@ -7,7 +7,6 @@ import numpy as np
 import joblib
 import json
 import copy
-from io import StringIO
 
 def standardize_mol(mol):
     lfc = rdMolStandardize.LargestFragmentChooser()
@@ -99,8 +98,12 @@ class PredictFlow(FlowSpec):
     def join(self, inputs):
         self.merge_artifacts(inputs, include = ['valid_ids', 'valid_smiles'])
         self.results_df = pd.DataFrame({'id': self.valid_ids, 'smiles': self.valid_smiles})
-        #assert alignment?
+
         for inp in inputs:
+            # check that number of predictions == number of SMILES
+            if len(inp.predictions) != len(self.results_df):
+                raise ValueError(f'Number of predictions does not match number of SMILES for {inp.model_name}')
+            
             self.results_df[inp.model_name] = inp.predictions
         self.results_json = self.results_df.to_dict(orient = 'records')
         self.next(self.end)
