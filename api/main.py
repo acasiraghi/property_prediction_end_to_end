@@ -17,6 +17,7 @@ app = FastAPI()
 @app.post('/predict')
 def run_pipeline(payload: PayLoad):
     with Runner('./pipeline/property_prediction.py').run(payload_json_string = payload.model_dump_json()) as running:
+        # TODO: pass errors from metaflow run status to GUI
         # if running.status == 'failed':
         #     message = f'{running.run} failed:'
         # elif running.status == 'successful':

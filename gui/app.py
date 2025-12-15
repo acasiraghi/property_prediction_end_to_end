@@ -28,7 +28,6 @@ with st.container(border = False, key = 'layout_container'):
 
         with st.container(border = True, 
                             key = 'container_2',
-                            #horizontal = True,
                             gap = 'small'):
 
             if not uploaded_file:
@@ -100,6 +99,8 @@ with st.container(border = False, key = 'layout_container'):
 
     with col2:
     
+        # TODO: add spinner when waiting for results
+
         if st.session_state.results_df is None and st.session_state.request_error is None: 
             st.markdown('<div style="align-text: center; align-items: center; justify-content: center; display: flex; height: 520px;"> Load compounds and define settings to start predictions. </div>', unsafe_allow_html = True)
         elif st.session_state.request_error is not None:
@@ -110,15 +111,19 @@ with st.container(border = False, key = 'layout_container'):
                 results_df = st.session_state.results_df.copy()
                 results_df['svg_text'] = results_df[smiles_column].apply(smiles_to_svg)
                 
-                results_df.insert(0,
+                # insert rendering column after ID column (second from left)
+                results_df.insert(1,
                                   'Structure_SVG',
                                    value = results_df['svg_text'].apply(svg_to_datauri),
                                    allow_duplicates = True
                                    )
-                
-                results_df.drop(columns = ['svg_text'], inplace = True)
                
-                # need to join predictions with data in original csv!
+                # merge predictions with molecules_df
+                results_df = results_df.merge(molecules_df.drop(columns = [smiles_column]), on = id_column)
+                # move SMILES column to end of df
+                results_df[smiles_column] = results_df.pop(smiles_column)
+                # drop svg string column 
+                results_df.drop(columns = ['svg_text'], inplace = True)
 
                 with col2_2:
                     with st.expander('Search by ID', width = 'stretch'):
@@ -163,13 +168,16 @@ with st.container(border = False, key = 'layout_container'):
 
                 with col2_1:
                     with st.container(border = True, height = 'stretch', key = 'df_container'):
-                        # need to change col names back to original
                         st.data_editor(
                                         results_df,
-                                        column_config = {'svg_datauri': st.column_config.ImageColumn(width = 'large')},
+                                        column_config = {'Structure_SVG': st.column_config.ImageColumn(width = 'large')},
                                         row_height = 110,
                                         height = 580, 
                                         hide_index = True,
                                         disabled = True
                                         )
+                        
+                        # TODO: add checkbox columns to results to select rows
+                        # TODO: add select all/deselect all (st.segmented_control)
+                        # TODO: download selected rows (or all rows)
 
