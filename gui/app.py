@@ -97,7 +97,7 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
         # TODO: add spinner when waiting for results
 
     if st.session_state.results_df is None and st.session_state.request_error is None: 
-        with st.container(border = True, height = 720, vertical_alignment = 'center', horizontal_alignment = 'center', key = 'results_before_predict'):
+        with st.container(border = True, height = 780, vertical_alignment = 'center', horizontal_alignment = 'center', key = 'results_before_predict'):
             
             st.markdown(
                 "<div style='text-align: center;'>Load compounds and define settings to start predictions.</div>",
@@ -106,7 +106,7 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
     elif st.session_state.request_error is not None:
         st.error(st.session_state.request_error)
     else:
-        with st.container(border = True, height = 720, key = 'results_after_predict'):
+        with st.container(border = True, height = 780, key = 'results_after_predict'):
             
             results_df = st.session_state.results_df.copy()
             results_df['svg_text'] = results_df[smiles_column].apply(smiles_to_svg)
@@ -125,6 +125,8 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
             results_df[smiles_column] = results_df.pop(smiles_column)
 
             results_df.drop(columns = ['svg_text'], inplace = True)
+
+            total_rows = results_df.shape[0]
             
             with st.container(border = False, width = 'stretch', key = 'selection_option_container'):
 
@@ -144,16 +146,16 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
 
             with col2_2:
 
-                with st.expander('Search by ID', width = 'stretch', expanded = False):
+                with st.expander('Search by ID', icon = ':material/id_card:', width = 'stretch', expanded = False):
                     id_string = st.text_input('Search one or more IDs, separated by comma', label_visibility = 'visible')
                     if id_string:
                         id_list = [e.strip() for e in id_string.split(',') if e.strip()]
                         results_df = results_df[results_df[id_column].isin(id_list)]
 
-                with st.expander('Numerical filters', width = 'stretch', expanded = False):
-      
+                with st.expander('Numerical filters', icon = ':material/filter_alt:', width = 'stretch', expanded = False):
+                     
                     numeric_columns = results_df.select_dtypes(include='number').columns
-
+                    # TODO: keep only columns where all values are not the same (or add error widget instead of slider)
                     with st.container(border = False, horizontal = True):
                         
                         if st.button('\-', width = 'stretch', type = 'tertiary'):
@@ -176,6 +178,7 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
                                                                 key = f'col_select_{i}')
                                 min_value = results_df[column_to_filter].min()
                                 max_value = results_df[column_to_filter].max()
+
                                 value_range = st.slider(f'{column_to_filter} slider', 
                                                         min_value = min_value, 
                                                         max_value = max_value, 
@@ -186,6 +189,10 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
                                 
                                 results_df = results_df[results_df[column_to_filter].between(*value_range)]
 
+
+                                
+                                
+
             with col2_1:
                     
                 results_df.insert(
@@ -195,18 +202,27 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
                                 allow_duplicates = True
                                 )
 
-                st.data_editor(
-                            results_df, 
-                            column_config = {
-                                        'Structure_SVG': st.column_config.ImageColumn(width = 'large'), 
-                                        'Selected': st.column_config.CheckboxColumn(default = False, disabled = False)
-                                        },
-                            row_height = 120,
-                            height = 640, 
-                            hide_index = True,
-                            disabled = results_df.columns[1:]
-                            )
+                edited_df = st.data_editor(
+                                        results_df, 
+                                        column_config = {
+                                                    'Structure_SVG': st.column_config.ImageColumn(width = 'large'), 
+                                                    'Selected': st.column_config.CheckboxColumn(default = False, disabled = False)
+                                                    },
+                                        row_height = 120,
+                                        height = 640, 
+                                        hide_index = True,
+                                        disabled = results_df.columns[1:],
+                                        key = 'results_data_editor'
+                                        )
                 
-                # TODO: download selected rows (or all rows)
-                # TODO: show total number of rows, rows after filtering (visible rows) and number selected rows
+                selected_df = edited_df[edited_df['Selected'] == True]
+
+                download_df = selected_df.drop(columns = ['Selected', 'Structure_SVG'])
+                smiles_column_to_move = download_df.pop(smiles_column)
+                download_df.insert(1, smiles_column, smiles_column_to_move)
+                csv_file = download_df.to_csv(index = False)
+
+            with st.container(border = False, horizontal = True, height = 'stretch', vertical_alignment = 'center'):
+                st.caption(f'   Total {total_rows} | Visible {results_df.shape[0]} | Selected {selected_df.shape[0]}')
+                st.download_button(label = 'Download selected', data = csv_file, file_name = 'test.csv', type = 'primary', icon = ':material/download:')
 
