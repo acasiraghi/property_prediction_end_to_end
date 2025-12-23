@@ -1,8 +1,14 @@
+import os
 import json
 import requests
+from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 import pandas as pd
 import streamlit as st
 from utils import smiles_to_svg, svg_to_datauri
+
+shared_dir = Path(os.environ['SHARED_DIR'])
 
 if 'results_df' not in st.session_state:
     st.session_state.results_df = None
@@ -57,7 +63,7 @@ with st.container(border = False, key = 'layout_container', height = 'content'):
                         st.multiselect('Select models', options = [''], disabled = True)
                         st.popover('Show models specs', width = 'stretch', disabled = True)
                     else:
-                        with open('./config/model_configs.json') as f:
+                        with open(shared_dir / 'config' / 'model_configs.json') as f:
                             model_configs = json.load(f)
                         model_names = [c['name'] for c in model_configs]
                         chosen_models = st.multiselect(

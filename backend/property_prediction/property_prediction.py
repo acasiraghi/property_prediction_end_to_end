@@ -1,7 +1,10 @@
 import joblib
+import os
 import json
 import copy
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 import pandas as pd 
 import numpy as np
 from metaflow import FlowSpec, step, Parameter
@@ -33,9 +36,9 @@ class PredictFlow(FlowSpec):
         self.payload = json.loads(self.payload_json_string)
         self.models = self.payload['config']['models']
         self.data_df = pd.DataFrame(self.payload['data']['rows'])
-        self.base_dir = Path(__file__).resolve().parent
-
-        config_path = self.base_dir / 'config' / 'model_configs.json'
+        self.models_dir = Path(os.environ['MODELS_DIR'])
+        self.shared_dir = Path(os.environ['SHARED_DIR'])
+        config_path = self.shared_dir / 'config' / 'model_configs.json'
         with open(config_path) as f:
             self.model_configs = json.load(f)
         self.supported_models = [c['name'] for c in self.model_configs]
@@ -92,7 +95,7 @@ class PredictFlow(FlowSpec):
     def predict(self):
         """Load models and make predictions."""
         self.model_name = self.input['name']
-        model_path = self.base_dir / 'models' / f'{self.model_name}.pickle'
+        model_path = self.models_dir / f'{self.model_name}.pickle'
         model = joblib.load(model_path)
         self.predictions = model.predict(self.features)
         self.next(self.join)
