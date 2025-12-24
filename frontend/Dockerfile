@@ -8,6 +8,9 @@ RUN micromamba install -y -n base -f /tmp/env.yml && micromamba clean -a -y
 
 # copy rest of code
 COPY frontend /app
+
 ENV SHARED_DIR=/app/shared
+ENV BACKEND_URL=http://localhost:8000
 EXPOSE 3000
-CMD ["micromamba", "run", "-n", "base", "streamlit", "run", "app.py", "--server.address", "0.0.0.0", "--port", "3000"]
+
+CMD ["micromamba", "run", "-n", "base", "streamlit", "run", "app.py", "--server.address", "0.0.0.0", "--server.port", "3000"]
