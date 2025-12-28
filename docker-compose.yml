@@ -12,6 +12,8 @@ services:
     build:
       context: .           
       dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
     volumes:
       - ./shared:/app/shared
     ports:

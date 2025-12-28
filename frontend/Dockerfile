@@ -10,7 +10,7 @@ RUN micromamba install -y -n base -f /tmp/env.yml && micromamba clean -a -y
 COPY frontend /app
 
 ENV SHARED_DIR=/app/shared
-ENV BACKEND_URL=http://localhost:8000
+ENV BACKEND_URL=http://backend:8000
 EXPOSE 3000
 
 CMD ["micromamba", "run", "-n", "base", "streamlit", "run", "app.py", "--server.address", "0.0.0.0", "--server.port", "3000"]
