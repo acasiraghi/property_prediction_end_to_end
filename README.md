@@ -25,17 +25,16 @@ Prerequisites:
 
 Steps:
 1. Clone the repository and change into it:
-   git clone https://github.com/your-org/property_prediction_end_to_end.git
+
+   git clone https://github.com/your-org/property_prediction_end_to_end.git  
    cd property_prediction_end_to_end
 
 2. From the repository root start the services with Docker Compose:
-   - foreground (attach logs, blocks terminal):
-     docker compose up
-   - detached (runs in background):
-     docker compose up -d
 
-3. Frontend URL:
-   - Once services are running, open the frontend in your browser at http://localhost:3000 (port may vary depending on compose configuration).
+   docker compose up
+
+3. Once services are running, open the frontend in your browser at http://localhost:3000
 
 4. To stop and remove containers:
+
    docker compose down
